@@ -17,6 +17,7 @@ const Dashboard = () => {
   const [members, setMembers] = useState([]);
   const [announcements, setAnnouncements] = useState([]);
   const [nextRehearsal, setNextRehearsal] = useState(null);
+  const [programs, setPrograms] = useState([]);
   
   // AI Flow State
   const [isDigitalizing, setIsDigitalizing] = useState(false);
@@ -38,7 +39,8 @@ const Dashboard = () => {
         supabase.from('events').select('*').order('event_date', { ascending: true }),
         supabase.from('profiles').select('*'),
         supabase.from('announcements').select('*').order('created_at', { ascending: false }).limit(10),
-        supabase.from('rehearsals').select('*').gte('rehearsal_date', new Date().toISOString()).order('rehearsal_date', { ascending: true }).limit(1)
+        supabase.from('rehearsals').select('*').gte('rehearsal_date', new Date().toISOString()).order('rehearsal_date', { ascending: true }).limit(1),
+        supabase.from('programs').select('*').order('created_at', { ascending: false }).limit(10)
       ]);
 
       if (results[0].status === 'fulfilled' && results[0].value.data) setPoetries(results[0].value.data);
@@ -46,6 +48,7 @@ const Dashboard = () => {
       if (results[2].status === 'fulfilled' && results[2].value.data) setMembers(results[2].value.data);
       if (results[3].status === 'fulfilled' && results[3].value.data) setAnnouncements(results[3].value.data);
       if (results[4].status === 'fulfilled' && results[4].value.data && results[4].value.data[0]) setNextRehearsal(results[4].value.data[0]);
+      if (results[5].status === 'fulfilled' && results[5].value.data) setPrograms(results[5].value.data);
     } catch (err) {
       console.error("Error fetching dashboard data:", err);
     } finally {
@@ -64,7 +67,7 @@ const Dashboard = () => {
       setAiResult(text);
     } catch (err) {
       console.error(err);
-      alert("Error al digitalizar la poesía. Inténtalo de nuevo.");
+      alert(`Error de digitalización: ${err.message}`);
       setShowAiModal(false);
     } finally {
       setIsDigitalizing(false);
@@ -97,7 +100,14 @@ const Dashboard = () => {
     }
   };
 
-  if (loading) return <div className="loading">Inspirando el panel de control...</div>;
+  if (loading) return (
+    <div className="loading">
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+        <div className="spinner" />
+        <p>Inspirando el panel de control...</p>
+      </div>
+    </div>
+  );
 
   return (
     <div className="animate">
@@ -149,7 +159,7 @@ const Dashboard = () => {
             </div>
             <label className="btn-primary btn-sm" style={{ cursor: 'pointer' }}>
               <Upload size={16} /> Digitalizar
-              <input type="file" hidden onChange={handleFileUpload} accept="image/*,.pdf,.docx" />
+              <input type="file" hidden onChange={handleFileUpload} accept="image/*,application/pdf,.docx,.doc,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/msword" />
             </label>
           </div>
           
@@ -157,8 +167,8 @@ const Dashboard = () => {
             {poetries.length === 0 ? (
               <p className="empty-text">No hay poesías aún.</p>
             ) : (
-              poetries.map(p => (
-                <div key={p.id} className="item-card glass-heavy card-hover">
+              poetries.slice(0, 10).map(p => (
+                <div key={p.id} className="item-card glass-heavy card-hover" onClick={() => navigate('/poetries')}>
                   <div>
                     <h4 style={{ color: 'var(--text-main)' }}>{p.title}</h4>
                     <p className="item-meta">{p.is_digitized ? '✨ IA Digitalizada' : 'Manuscrito'}</p>
@@ -170,7 +180,36 @@ const Dashboard = () => {
           </div>
         </section>
 
-        {/* —————— SECCIÓN 2: SALIDAS —————— */}
+        {/* —————— SECCIÓN 2: PROGRAMAS (NUEVO) —————— */}
+        <section className="dashboard-section glass">
+          <div className="section-header">
+            <div className="title-with-icon">
+              <FileText size={22} color="var(--accent)" />
+              <h2 className="serif">Programas</h2>
+            </div>
+            <button className="btn-ghost btn-sm" onClick={() => navigate('/programs')}>
+              Ver todo
+            </button>
+          </div>
+          
+          <div className="scroll-area">
+            {programs.length === 0 ? (
+              <p className="empty-text">No hay programas registrados.</p>
+            ) : (
+              programs.slice(0, 10).map(prog => (
+                <div key={prog.id} className="item-card glass-heavy card-hover" onClick={() => navigate('/programs')}>
+                  <div>
+                    <h4 style={{ color: 'var(--text-main)' }}>{prog.title}</h4>
+                    <p className="item-meta">{prog.event_name || 'Evento general'}</p>
+                  </div>
+                  <ArrowRight size={18} className="arrow" />
+                </div>
+              ))
+            )}
+          </div>
+        </section>
+
+        {/* —————— SECCIÓN 3: SALIDAS —————— */}
         <section className="dashboard-section glass">
           <div className="section-header">
             <div className="title-with-icon">
@@ -202,7 +241,7 @@ const Dashboard = () => {
           </div>
         </section>
 
-        {/* —————— SECCIÓN 3: MIEMBROS —————— */}
+        {/* —————— SECCIÓN 4: MIEMBROS —————— */}
         <section className="dashboard-section glass">
           <div className="section-header">
             <div className="title-with-icon">
@@ -237,35 +276,6 @@ const Dashboard = () => {
             <button className="btn-ghost" style={{ width: '100%', marginTop: 'auto' }} onClick={() => navigate('/members')}>
               Ver todos
             </button>
-          </div>
-        </section>
-
-        {/* —————— SECCIÓN 4: ANUNCIOS —————— */}
-        <section className="dashboard-section glass">
-          <div className="section-header">
-            <div className="title-with-icon">
-              <Megaphone size={22} color="var(--accent)" />
-              <h2 className="serif">Anuncios</h2>
-            </div>
-          </div>
-          
-          <div className="scroll-area feed">
-            {announcements.length === 0 ? (
-              <p className="empty-text">No hay anuncios recientes.</p>
-            ) : (
-              announcements.map(a => (
-                <div key={a.id} className="feed-item">
-                  <div className={`feed-icon ${a.type}`}>
-                    {a.type === 'poetry' ? <FileText size={14} /> : <MapPin size={14} />}
-                  </div>
-                  <div className="feed-content">
-                    <strong>{a.title}</strong>
-                    <p>{a.message}</p>
-                    <span className="feed-date">{new Date(a.created_at).toLocaleDateString()}</span>
-                  </div>
-                </div>
-              ))
-            )}
           </div>
         </section>
       </div>

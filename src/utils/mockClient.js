@@ -13,9 +13,11 @@ const EMPTY_DB = () => ({
   events: [],
   places: [],
   event_participants: [],
+  event_photos: [],
   announcements: [],
   rehearsals: [],
-  poetries: []
+  poetries: [],
+  programs: []
 });
 
 const getDb = () => {

@@ -15,21 +15,39 @@ const Login = () => {
   const [cooldown, setCooldown] = useState(0);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        setIsRecovery(false);
+    // Check if there are errors in the URL (like expired links)
+    const params = new URLSearchParams(window.location.search);
+    const errorMsg = params.get('error_description') || params.get('error');
+    if (errorMsg) {
+      if (errorMsg.includes('expired')) {
+        setMessage('El enlace ha expirado. Por favor, solicita uno nuevo.');
+      } else {
+        setMessage(`Error: ${errorMsg}`);
       }
-    }).catch(err => {
-      console.error('Session Error:', err);
-    });
+    }
+
+    const checkRecovery = async () => {
+      const hash = window.location.hash;
+      if (hash.includes('type=recovery') || hash.includes('access_token=')) {
+        setIsRecovery(true);
+      }
+    };
+    checkRecovery();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'PASSWORD_RECOVERY') {
         setIsRecovery(true);
+        setIsForgotPassword(false);
+        setIsSignUp(false);
+      }
+      
+      // If user is logged in and not in recovery, they shouldn't be here (App.jsx handles redirect, but good to have)
+      if (event === 'SIGNED_IN' && !isRecovery) {
+        // Normal login redirect is handled by App.jsx
       }
     });
     return () => subscription?.unsubscribe();
-  }, []);
+  }, [isRecovery]);
 
   const handleAuth = async (e) => {
     e.preventDefault();
@@ -40,8 +58,11 @@ const Login = () => {
       if (isRecovery) {
         const { error } = await supabase.auth.updateUser({ password: newPassword });
         if (error) throw error;
-        setMessage('Contraseña actualizada con éxito. Ya puedes iniciar sesión.');
+        setMessage('¡Contraseña actualizada con éxito! Entrando...');
         setIsRecovery(false);
+        // Clear recovery hash from URL to allow App.jsx redirect to dashboard
+        window.history.replaceState(null, '', window.location.pathname);
+        setTimeout(() => window.location.href = '/', 1500);
       } else if (isForgotPassword) {
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
           redirectTo: `${window.location.origin}/login`,
@@ -64,7 +85,8 @@ const Login = () => {
           }
         });
         if (error) throw error;
-        setMessage('Revisa tu correo para confirmar tu cuenta.');
+        setMessage('¡Cuenta creada con éxito! Ya puedes iniciar sesión con tus datos.');
+        setIsSignUp(false);
       } else {
         const { error, data } = await supabase.auth.signInWithPassword({
           email,
@@ -75,7 +97,7 @@ const Login = () => {
     } catch (error) {
       console.error('Auth Error Details:', error);
       if (error.status === 403 || error.code === '403' || error.message?.includes('403')) {
-        setMessage('Acceso denegado (403). Asegúrate de que el correo existe y está confirmado, o espera unos minutos.');
+        setMessage('Acceso denegado (403). Asegúrate de que tus datos sean correctos o que la cuenta esté activa.');
       } else {
         setMessage(error.message || 'Ocurrió un error inesperado.');
       }
@@ -89,33 +111,44 @@ const Login = () => {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      minHeight: '80vh'
+      minHeight: '100vh',
+      width: '100%',
+      position: 'relative',
+      overflow: 'hidden'
     }}>
-      <div className="glass login-card animate" style={{
+      {/* Background Decorative Elements */}
+      <div style={{ position: 'absolute', top: '10%', left: '5%', width: '300px', height: '300px', background: 'var(--accent-glow)', filter: 'blur(100px)', borderRadius: '50%', opacity: 0.3 }}></div>
+      <div style={{ position: 'absolute', bottom: '10%', right: '5%', width: '400px', height: '400px', background: 'var(--accent-glow)', filter: 'blur(120px)', borderRadius: '50%', opacity: 0.2 }}></div>
+
+      <div className="glass login-card animate-fade" style={{
         width: '100%',
-        maxWidth: '460px',
-        padding: '3rem',
-        textAlign: 'center'
+        maxWidth: '480px',
+        padding: '4rem 3.5rem',
+        textAlign: 'center',
+        position: 'relative',
+        zIndex: 1,
+        boxShadow: '0 30px 60px rgba(0,0,0,0.5), inset 0 0 0 1px rgba(255,255,255,0.05)'
       }}>
         <div style={{ 
           display: 'inline-flex', 
-          padding: '12px', 
+          padding: '16px', 
           background: 'var(--accent)', 
-          borderRadius: '16px', 
-          marginBottom: '1.5rem',
-          color: '#000'
+          borderRadius: '20px', 
+          marginBottom: '2rem',
+          color: '#000',
+          boxShadow: '0 10px 30px var(--accent-glow)'
         }}>
-          <PenTool size={32} />
+          <PenTool size={36} />
         </div>
         
-        <h2 className="serif" style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>
-          {isRecovery ? 'Nueva Contraseña' : isSignUp ? 'Únete al Gupo' : 'Bienvenido'}
+        <h2 className="serif" style={{ fontSize: '3rem', marginBottom: '1rem', letterSpacing: '-0.02em' }}>
+          {isRecovery ? 'Nueva Contraseña' : isSignUp ? 'Únete al Grupo' : 'Verbo Eterno'}
         </h2>
-        <p style={{ color: 'var(--text-muted)', marginBottom: '2rem' }}>
-          {isRecovery ? 'Elige una contraseña segura' : isSignUp ? 'Comienza tu viaje poético con nosotros' : 'Entra para ver las últimas poesías'}
+        <p style={{ color: 'var(--text-muted)', marginBottom: '3rem', fontSize: '1.1rem' }}>
+          {isRecovery ? 'Elige una contraseña segura' : isSignUp ? 'Comienza tu viaje poético con nosotros' : 'Donde las palabras cobran vida'}
         </p>
 
-        <form onSubmit={handleAuth}>
+        <form onSubmit={handleAuth} style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
           {isRecovery ? (
             <div style={{ position: 'relative' }}>
               <input
@@ -163,12 +196,11 @@ const Login = () => {
               )}
 
               {!isSignUp && !isForgotPassword && (
-                <div style={{ textAlign: 'right', marginBottom: '1rem' }}>
+                <div style={{ textAlign: 'right', marginBottom: '1.5rem' }}>
                   <button 
                     type="button" 
-                    className="btn-link" 
                     onClick={() => setIsForgotPassword(true)}
-                    style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: '0.85rem', padding: 0 }}
+                    style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: '0.9rem', padding: 0, cursor: 'pointer', fontWeight: 500 }}
                   >
                     ¿Olvidaste tu contraseña?
                   </button>
@@ -180,10 +212,10 @@ const Login = () => {
           <button 
             type="submit" 
             className="btn-primary" 
-            style={{ width: '100%', justifyContent: 'center', marginTop: '1rem' }}
+            style={{ width: '100%', justifyContent: 'center', height: '56px', fontSize: '1.1rem', marginTop: '1rem' }}
             disabled={loading || cooldown > 0}
           >
-            {loading ? 'Procesando...' : (
+            {loading ? <span className="spinner-sm" style={{ borderTopColor: '#000' }} /> : (
               isForgotPassword 
                 ? (cooldown > 0 ? `Espera ${cooldown}s` : 'Enviar enlace') 
                 : isRecovery ? 'Actualizar Contraseña' : isSignUp ? 'Crear Cuenta' : 'Iniciar Sesión'
@@ -195,7 +227,7 @@ const Login = () => {
               type="button" 
               className="btn-ghost" 
               onClick={() => { setIsForgotPassword(false); setIsRecovery(false); }}
-              style={{ width: '100%', justifyContent: 'center', marginTop: '0.8rem', fontSize: '0.85rem' }}
+              style={{ width: '100%', justifyContent: 'center', marginTop: '1rem', height: '52px' }}
             >
               Volver al inicio de sesión
             </button>
@@ -203,30 +235,29 @@ const Login = () => {
         </form>
 
         {message && (
-          <div className="glass-heavy" style={{ 
-            marginTop: '1.5rem', 
-            padding: '1rem', 
-            borderColor: message.includes('Revisa') ? '#4ade80' : 'var(--accent)',
-            fontSize: '0.9rem' 
+          <div className="glass-heavy animate-fade" style={{ 
+            marginTop: '2rem', 
+            padding: '1.2rem', 
+            borderRadius: '16px',
+            borderLeft: `4px solid ${message.includes('Revisa') || message.includes('éxito') ? '#4ade80' : 'var(--accent)'}`,
+            textAlign: 'left'
           }}>
-            <p style={{ color: message.includes('Revisa') ? '#4ade80' : 'var(--accent)' }}>
+            <p style={{ color: message.includes('Revisa') || message.includes('éxito') ? '#4ade80' : 'var(--accent)', fontWeight: 500, fontSize: '0.95rem' }}>
               {message}
             </p>
-            {message.includes('Revisa') && (
-              <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
-                Nota: Si no recibes el correo, comprueba tu carpeta de Spam o contacta al administrador.
-              </p>
-            )}
           </div>
         )}
 
-        <div style={{ marginTop: '2rem', paddingTop: '1.5rem', borderTop: '1px solid var(--border)' }}>
+        <div style={{ marginTop: '3rem', paddingTop: '2rem', borderTop: '1px solid var(--border)' }}>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', marginBottom: '1.5rem' }}>
+            {isSignUp ? '¿Ya eres parte del grupo?' : '¿Aún no tienes cuenta?'}
+          </p>
           <button 
             onClick={() => setIsSignUp(!isSignUp)}
             className="btn-ghost"
-            style={{ fontSize: '0.9rem' }}
+            style={{ width: '100%', justifyContent: 'center', height: '52px' }}
           >
-            {isSignUp ? '¿Ya tienes cuenta? Inicia sesión' : '¿No tienes cuenta? Regístrate'}
+            {isSignUp ? 'Iniciar Sesión' : 'Regístrate aquí'}
           </button>
         </div>
       </div>

@@ -12,8 +12,42 @@ export const isMockMode = isBrokenUrl;
 
 if (isMockMode) {
   console.warn("🚀 Iniciando en MODO LOCAL (Mock). Supabase real no está disponible o la URL es inválida.");
+} else {
+  // Fix for Supabase Auth Lock bug: Clear any stuck locks in localStorage
+  try {
+    const storageKey = 'poesia-viva-auth-v5';
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && (
+        key.includes('auth-token') || 
+        key.includes('lock') || 
+        key.startsWith('sb-') ||
+        key.includes('poesia-viva-auth')
+      )) {
+        // If it's a lock key or old session, remove it to prevent stale lock errors
+        if (key.includes('lock') || key.includes('v4')) {
+          localStorage.removeItem(key);
+        }
+      }
+    }
+  } catch (e) { /* ignore */ }
 }
 
 export const supabase = isMockMode 
   ? mockClient 
-  : createClient(supabaseUrl, supabaseAnonKey);
+  : createClient(supabaseUrl, supabaseAnonKey, {
+      auth: {
+        storageKey: 'poesia-viva-auth-v5', // Incrementing version to force fresh state
+        autoRefreshToken: true,
+        persistSession: true,
+        detectSessionInUrl: true,
+        flowType: 'pkce',
+        // Fix for NavigatorLockAcquireTimeoutError & TypeError: acquire is not a function
+        lock: async (name, acquire) => {
+          // Some versions pass (name, acquire), others just (acquire)
+          const fn = typeof name === 'function' ? name : acquire;
+          if (typeof fn === 'function') return await fn();
+          return {}; // Return empty object as fallback
+        }
+      }
+    });

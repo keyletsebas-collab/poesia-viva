@@ -9,6 +9,7 @@ import {
   Settings, 
   LogOut, 
   BookOpen,
+  FileText,
   PenTool,
   Shield
 } from 'lucide-react';
@@ -36,7 +37,7 @@ const Sidebar = () => {
         <div style={{ padding: '8px', background: 'var(--accent)', borderRadius: '12px' }}>
           <PenTool size={24} color="#000" />
         </div>
-        <h2 className="serif" style={{ fontSize: '1.5rem', letterSpacing: '-0.5px' }}>Poesía Viva</h2>
+        <h2 className="serif" style={{ fontSize: '1.5rem', letterSpacing: '-0.5px' }}>Verbo Eterno</h2>
       </div>
 
       <nav style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
@@ -51,6 +52,10 @@ const Sidebar = () => {
         <NavLink to="/poetries" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
           <BookOpen size={20} />
           <span>Poesías</span>
+        </NavLink>
+        <NavLink to="/programs" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+          <FileText size={20} />
+          <span>Programas</span>
         </NavLink>
         <NavLink to="/places" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
           <MapPin size={20} />
