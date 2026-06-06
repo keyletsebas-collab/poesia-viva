@@ -47,13 +47,11 @@ const AuthWrapper = () => {
   
   return (
     <>
-      {user && !window.location.hash.includes('type=recovery') && <Sidebar />}
+      {user && <Sidebar />}
       <main className="main-content">
         <Routes>
           <Route path="/login" element={
-            (!user || window.location.hash.includes('type=recovery')) 
-              ? <Login /> 
-              : <Navigate to="/" />
+            !user ? <Login /> : <Navigate to="/" />
           } />
           <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
           <Route path="/event/:id" element={<ProtectedRoute><EventDetail /></ProtectedRoute>} />
