@@ -136,6 +136,20 @@ const AdminPanel = () => {
     } catch (err) { alert(err.message); } finally { setActionLoading(null); }
   };
 
+  const handleDeleteUser = async (userId) => {
+    if (!confirm('¿Estás seguro de que deseas eliminar permanentemente a este usuario? Esta acción no se puede deshacer.')) return;
+    setActionLoading(userId);
+    try {
+      const { error } = await supabase.rpc('delete_user_by_admin', { user_to_delete: userId });
+      if (error) throw error;
+      fetchUsers();
+    } catch (err) {
+      alert('Error al eliminar el usuario: ' + err.message);
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
   const deleteItem = async (table, id) => {
     if (!confirm('¿Estás seguro de eliminar este elemento?')) return;
     setActionLoading(id);
@@ -216,13 +230,14 @@ const AdminPanel = () => {
           <div className="loading">Cargando datos...</div>
         ) : (
           <div className="animate-fade">
-            {activeTab === 'roles' && (
+             {activeTab === 'roles' && (
               <div className="table-responsive">
                 <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                   <thead>
                     <tr style={{ textAlign: 'left', color: 'var(--text-muted)', borderBottom: '1px solid var(--border)' }}>
                       <th style={{ padding: '1.2rem' }}>Miembro</th>
                       <th style={{ padding: '1.2rem' }}>Email</th>
+                      <th style={{ padding: '1.2rem' }}>Contraseña</th>
                       <th style={{ padding: '1.2rem' }}>Rol</th>
                       <th style={{ padding: '1.2rem' }}>Acciones</th>
                     </tr>
@@ -232,6 +247,10 @@ const AdminPanel = () => {
                       <tr key={u.id} style={{ borderBottom: '1px solid var(--border)' }}>
                         <td style={{ padding: '1.2rem' }}>{u.full_name || 'Sin nombre'}</td>
                         <td style={{ padding: '1.2rem', color: 'var(--text-muted)' }}>{u.username}</td>
+                        <td style={{ padding: '1.2rem', color: 'var(--text-muted)', fontFamily: 'monospace' }}>
+                          ••••••••
+                          <span style={{ display: 'block', fontSize: '0.65rem', color: '#ffb84d', marginTop: '2px' }}>Encriptada (Bcrypt)</span>
+                        </td>
                         <td style={{ padding: '1.2rem' }}>
                           <span style={{ 
                             padding: '6px 14px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 700,
@@ -241,14 +260,25 @@ const AdminPanel = () => {
                           }}>{u.role === 'admin' ? 'ADMIN' : 'USUARIO'}</span>
                         </td>
                         <td style={{ padding: '1.2rem' }}>
-                          <button 
-                            disabled={actionLoading === u.id}
-                            onClick={() => toggleAdmin(u.id, u.role)}
-                            className="btn-ghost"
-                            style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}
-                          >
-                            {actionLoading === u.id ? '...' : (u.role === 'admin' ? 'Quitar Admin' : 'Hacer Admin')}
-                          </button>
+                          <div style={{ display: 'flex', gap: '0.8rem', alignItems: 'center' }}>
+                            <button 
+                              disabled={actionLoading === u.id}
+                              onClick={() => toggleAdmin(u.id, u.role)}
+                              className="btn-ghost"
+                              style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}
+                            >
+                              {actionLoading === u.id ? '...' : (u.role === 'admin' ? 'Quitar Admin' : 'Hacer Admin')}
+                            </button>
+                            <button 
+                              disabled={actionLoading === u.id}
+                              onClick={() => handleDeleteUser(u.id)}
+                              className="btn-ghost"
+                              style={{ color: '#ff4d4d', padding: '0.5rem', borderRadius: '8px' }}
+                              title="Eliminar usuario permanentemente"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}
