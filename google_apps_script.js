@@ -15,7 +15,7 @@
 
 // Obtener variables desde Propiedades de Script para seguridad
 const scriptProperties = PropertiesService.getScriptProperties();
-const SUPABASE_URL = scriptProperties.getProperty("SUPABASE_URL");
+const SUPABASE_URL = scriptProperties.getProperty("SUPABASE_URL") || "https://bienreziflsjpmskkkud.supabase.co";
 const SUPABASE_SERVICE_ROLE_KEY = scriptProperties.getProperty("SUPABASE_SERVICE_ROLE_KEY");
 
 function doPost(e) {
