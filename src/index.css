@@ -116,16 +116,13 @@ h1, h2, h3, h4, .serif {
     flex-direction: column;
   }
   .sidebar {
-    width: 100% !important;
-    height: auto !important;
-    position: relative !important;
-    padding: 1.5rem !important;
+    display: none !important;
   }
   .main-content {
-    padding: 1.5rem;
+    padding: 6rem 1.5rem 2rem 1.5rem !important;
   }
   h1 {
-    font-size: 2.5rem !important;
+    font-size: 2.3rem !important;
   }
 }
 
@@ -224,3 +221,28 @@ button {
   animation: spin 1s linear infinite;
   margin-bottom: 1rem;
 }
+
+/* Responsive Login Card & General Adaptations */
+.login-card {
+  width: 95%;
+  max-width: 480px;
+  padding: 4rem 3.5rem;
+  text-align: center;
+  position: relative;
+  z-index: 1;
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+}
+
+@media (max-width: 480px) {
+  .login-card {
+    padding: 2.5rem 1.5rem !important;
+  }
+  .login-card h2 {
+    font-size: 2.2rem !important;
+  }
+  .login-card p {
+    font-size: 0.95rem !important;
+    margin-bottom: 2rem !important;
+  }
+}
+

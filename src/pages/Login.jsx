@@ -54,6 +54,8 @@ const Login = () => {
     setLoading(true);
     setMessage('');
 
+    const appsScriptUrl = import.meta.env.VITE_APPS_SCRIPT_URL;
+
     try {
       if (isRecovery) {
         const { error } = await supabase.auth.updateUser({ password: newPassword });
@@ -64,11 +66,27 @@ const Login = () => {
         window.history.replaceState(null, '', window.location.pathname);
         setTimeout(() => window.location.href = '/', 1500);
       } else if (isForgotPassword) {
-        const { error } = await supabase.auth.resetPasswordForEmail(email, {
-          redirectTo: `${window.location.origin}/login`,
+        if (!appsScriptUrl || appsScriptUrl.includes('tu-id-de-despliegue')) {
+          throw new Error('La URL de Google Apps Script (VITE_APPS_SCRIPT_URL) no está configurada en tu archivo .env.');
+        }
+
+        const res = await fetch(appsScriptUrl, {
+          method: 'POST',
+          mode: 'cors',
+          headers: { 'Content-Type': 'text/plain' },
+          body: JSON.stringify({
+            action: 'reset_password',
+            email,
+            origin: window.location.origin
+          })
         });
-        if (error) throw error;
-        setMessage('Se ha enviado un enlace de recuperación a tu correo.');
+
+        const resData = await res.json();
+        if (!resData.success) {
+          throw new Error(resData.error || 'Ocurrió un error al enviar el correo de recuperación.');
+        }
+
+        setMessage('Se ha enviado un enlace de recuperación a tu correo. Revisa tu bandeja de entrada.');
         setCooldown(60); // 60 seconds cooldown
         const timer = setInterval(() => {
           setCooldown(prev => {
@@ -77,15 +95,29 @@ const Login = () => {
           });
         }, 1000);
       } else if (isSignUp) {
-        const { error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            data: { full_name: fullName }
-          }
+        if (!appsScriptUrl || appsScriptUrl.includes('tu-id-de-despliegue')) {
+          throw new Error('La URL de Google Apps Script (VITE_APPS_SCRIPT_URL) no está configurada en tu archivo .env.');
+        }
+
+        const res = await fetch(appsScriptUrl, {
+          method: 'POST',
+          mode: 'cors',
+          headers: { 'Content-Type': 'text/plain' },
+          body: JSON.stringify({
+            action: 'signup',
+            email,
+            password,
+            fullName,
+            origin: window.location.origin
+          })
         });
-        if (error) throw error;
-        setMessage('¡Cuenta creada con éxito! Ya puedes iniciar sesión con tus datos.');
+
+        const resData = await res.json();
+        if (!resData.success) {
+          throw new Error(resData.error || 'Ocurrió un error en el registro.');
+        }
+
+        setMessage('¡Registro exitoso! Te hemos enviado un correo de verificación. Por favor, confirma tu cuenta antes de iniciar sesión.');
         setIsSignUp(false);
       } else {
         const { error, data } = await supabase.auth.signInWithPassword({
@@ -96,8 +128,8 @@ const Login = () => {
       }
     } catch (error) {
       console.error('Auth Error Details:', error);
-      if (error.status === 403 || error.code === '403' || error.message?.includes('403')) {
-        setMessage('Acceso denegado (403). Asegúrate de que tus datos sean correctos o que la cuenta esté activa.');
+      if (error.status === 403 || error.code === '403' || error.message?.includes('403') || error.message?.includes('confirmed')) {
+        setMessage('Acceso denegado. Asegúrate de verificar tu cuenta por correo electrónico antes de iniciar sesión o de ingresar los datos correctos.');
       } else {
         setMessage(error.message || 'Ocurrió un error inesperado.');
       }
@@ -120,15 +152,7 @@ const Login = () => {
       <div style={{ position: 'absolute', top: '10%', left: '5%', width: '300px', height: '300px', background: 'var(--accent-glow)', filter: 'blur(100px)', borderRadius: '50%', opacity: 0.3 }}></div>
       <div style={{ position: 'absolute', bottom: '10%', right: '5%', width: '400px', height: '400px', background: 'var(--accent-glow)', filter: 'blur(120px)', borderRadius: '50%', opacity: 0.2 }}></div>
 
-      <div className="glass login-card animate-fade" style={{
-        width: '100%',
-        maxWidth: '480px',
-        padding: '4rem 3.5rem',
-        textAlign: 'center',
-        position: 'relative',
-        zIndex: 1,
-        boxShadow: '0 30px 60px rgba(0,0,0,0.5), inset 0 0 0 1px rgba(255,255,255,0.05)'
-      }}>
+      <div className="glass login-card animate-fade">
         <div style={{ 
           display: 'inline-flex', 
           padding: '16px', 
