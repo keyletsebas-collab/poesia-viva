@@ -33,11 +33,24 @@ const Login = () => {
         }
         setIsSignUp(false);
       } else {
-        const { error } = await supabase.auth.signInWithPassword({
+        const { data, error } = await supabase.auth.signInWithPassword({
           email,
           password
         });
         if (error) throw error;
+
+        if (data?.user) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('status')
+            .eq('id', data.user.id)
+            .single();
+
+          if (profile && profile.status === 'inactive') {
+            await supabase.auth.signOut();
+            throw new Error('Esta cuenta ha sido inhabilitada por un administrador.');
+          }
+        }
       }
     } catch (error) {
       console.error('Auth Error Details:', error);

@@ -32,3 +32,6 @@ dist-ssr
 
 # Supabase
 supabase/.temp
+
+# Nested projects
+gestor-usuarios/

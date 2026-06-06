@@ -108,16 +108,10 @@ const Sidebar = () => {
           </NavLink>
           
           {role === 'admin' && (
-            <>
-              <NavLink to="/admin" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} style={{ marginTop: '1rem' }} onClick={closeSidebar}>
-                <Shield size={20} />
-                <span>Administración</span>
-              </NavLink>
-              <NavLink to="/admin/users" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} onClick={closeSidebar}>
-                <Users size={20} />
-                <span>Gestión de Cuentas</span>
-              </NavLink>
-            </>
+            <NavLink to="/admin" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} style={{ marginTop: '1rem' }} onClick={closeSidebar}>
+              <Shield size={20} />
+              <span>Administración</span>
+            </NavLink>
           )}
         </nav>
 

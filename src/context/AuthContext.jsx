@@ -7,6 +7,7 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [role, setRole] = useState('user'); // 'user' or 'admin'
+  const [status, setStatus] = useState('active'); // 'active' or 'inactive'
 
   useEffect(() => {
     let mounted = true;
@@ -29,7 +30,7 @@ export const AuthProvider = ({ children }) => {
       setUser(user);
       if (user) {
         ensureProfile(user);
-        fetchUserRole(user.id);
+        fetchUserRoleAndStatus(user.id);
       }
       setLoading(false);
     }).catch(err => {
@@ -44,9 +45,10 @@ export const AuthProvider = ({ children }) => {
       setUser(user);
       if (user) {
         await ensureProfile(user);
-        await fetchUserRole(user.id);
+        await fetchUserRoleAndStatus(user.id);
       } else {
         setRole('user');
+        setStatus('active');
       }
       setLoading(false);
     });
@@ -68,7 +70,8 @@ export const AuthProvider = ({ children }) => {
           id: user.id,
           username: user.email,
           full_name: user.user_metadata?.full_name || user.email?.split('@')[0],
-          role: 'user'
+          role: 'user',
+          status: 'active'
         }]);
       }
     } catch (err) {
@@ -76,22 +79,34 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const fetchUserRole = async (userId) => {
+  const fetchUserRoleAndStatus = async (userId) => {
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('role')
+        .select('role, status')
         .eq('id', userId)
         .single();
       
-      if (data) setRole(data.role);
+      if (data) {
+        if (data.status === 'inactive') {
+          // If deactivated, force sign out immediately
+          await supabase.auth.signOut();
+          setUser(null);
+          setRole('user');
+          setStatus('inactive');
+          alert('Tu cuenta ha sido inhabilitada por un administrador.');
+          return;
+        }
+        setRole(data.role);
+        setStatus(data.status || 'active');
+      }
     } catch (err) {
-      console.error('Error fetching role:', err);
+      console.error('Error fetching role and status:', err);
     }
   };
 
   return (
-    <AuthContext.Provider value={{ user, role, loading }}>
+    <AuthContext.Provider value={{ user, role, status, loading }}>
       {children}
     </AuthContext.Provider>
   );

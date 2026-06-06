@@ -11,7 +11,6 @@ import Places from './pages/Places';
 import Poetries from './pages/Poetries';
 import Programs from './pages/Programs';
 import Settings from './pages/Settings';
-import UserDirectory from './pages/UserDirectory/UserDirectory';
 import './index.css';
 
 const ProtectedRoute = ({ children, adminOnly = false }) => {
@@ -62,7 +61,6 @@ const AuthWrapper = () => {
           <Route path="/programs" element={<ProtectedRoute><Programs /></ProtectedRoute>} />
           <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
           <Route path="/admin" element={<ProtectedRoute adminOnly={true}><AdminPanel /></ProtectedRoute>} />
-          <Route path="/admin/users" element={<ProtectedRoute adminOnly={true}><UserDirectory /></ProtectedRoute>} />
         </Routes>
       </main>
     </>
