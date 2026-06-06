@@ -1,7 +1,14 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const cleanEnvVar = (val) => {
+  if (!val) return '';
+  const cleaned = val.replace(/^['"]|['"]$/g, '').trim();
+  if (cleaned === 'undefined' || cleaned === 'null') return '';
+  return cleaned;
+};
+
+const supabaseUrl = cleanEnvVar(import.meta.env.VITE_SUPABASE_URL);
+const supabaseAnonKey = cleanEnvVar(import.meta.env.VITE_SUPABASE_ANON_KEY);
 
 if (!supabaseUrl || !supabaseAnonKey || supabaseUrl.includes('placeholder')) {
   console.error(
