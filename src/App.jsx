@@ -5,28 +5,24 @@ import Sidebar from './components/Sidebar';
 import Dashboard from './pages/Dashboard';
 import Login from './pages/Login';
 import Members from './pages/Members';
-import AdminPanel from './pages/AdminPanel';
-import EventDetail from './pages/EventDetail';
 import Places from './pages/Places';
 import Poetries from './pages/Poetries';
 import Programs from './pages/Programs';
 import Settings from './pages/Settings';
+import News from './pages/News';
+import Outings from './pages/Outings';
+import Rehearsals from './pages/Rehearsals';
 import './index.css';
 
-const ProtectedRoute = ({ children, adminOnly = false }) => {
-  const { user, role, loading } = useAuth();
-
-  // Only show full loading if we don't have a user yet and we are still checking
+const ProtectedRoute = ({ children }) => {
+  const { user, loading } = useAuth();
   if (loading && !user) return (
     <div className="loading">
       <div className="spinner" />
       <p>Verificando sesión...</p>
     </div>
   );
-  
   if (!user) return <Navigate to="/login" />;
-  if (adminOnly && role !== 'admin') return <Navigate to="/" />;
-
   return children;
 };
 
@@ -44,23 +40,28 @@ function App() {
 
 const AuthWrapper = () => {
   const { user } = useAuth();
-  
   return (
     <>
       {user && <Sidebar />}
       <main className="main-content">
         <Routes>
-          <Route path="/login" element={
-            !user ? <Login /> : <Navigate to="/" />
-          } />
+          <Route path="/login" element={!user ? <Login /> : <Navigate to="/" />} />
           <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-          <Route path="/event/:id" element={<ProtectedRoute><EventDetail /></ProtectedRoute>} />
-          <Route path="/members" element={<ProtectedRoute><Members /></ProtectedRoute>} />
-          <Route path="/places" element={<ProtectedRoute><Places /></ProtectedRoute>} />
-          <Route path="/poetries" element={<ProtectedRoute><Poetries /></ProtectedRoute>} />
-          <Route path="/programs" element={<ProtectedRoute><Programs /></ProtectedRoute>} />
-          <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
-          <Route path="/admin" element={<ProtectedRoute adminOnly={true}><AdminPanel /></ProtectedRoute>} />
+          <Route path="/noticias" element={<ProtectedRoute><News /></ProtectedRoute>} />
+          <Route path="/poetrias" element={<ProtectedRoute><Poetries /></ProtectedRoute>} />
+          <Route path="/programas" element={<ProtectedRoute><Programs /></ProtectedRoute>} />
+          <Route path="/salidas" element={<ProtectedRoute><Outings /></ProtectedRoute>} />
+          <Route path="/ensayos" element={<ProtectedRoute><Rehearsals /></ProtectedRoute>} />
+          <Route path="/lugares" element={<ProtectedRoute><Places /></ProtectedRoute>} />
+          <Route path="/miembros" element={<ProtectedRoute><Members /></ProtectedRoute>} />
+          <Route path="/ajustes" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+          {/* Backward compat */}
+          <Route path="/poetries" element={<Navigate to="/poetrias" />} />
+          <Route path="/programs" element={<Navigate to="/programas" />} />
+          <Route path="/places" element={<Navigate to="/lugares" />} />
+          <Route path="/members" element={<Navigate to="/miembros" />} />
+          <Route path="/settings" element={<Navigate to="/ajustes" />} />
+          <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </main>
     </>
