@@ -5,108 +5,85 @@ const AuthContext = createContext({});
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
+  const [role, setRole] = useState('user');
   const [loading, setLoading] = useState(true);
-  const [role, setRole] = useState('user'); // 'user' or 'admin'
-  const [status, setStatus] = useState('active'); // 'active' or 'inactive'
 
   useEffect(() => {
     let mounted = true;
 
-    // Safety timeout — never leave the user on a blank screen
-    const safetyTimer = setTimeout(() => {
-      if (mounted && loading) {
-        console.warn('Auth timeout: forcing loading = false (Supabase session is slow)');
+    // ── 1. Load session once on mount ─────────────────────────────────────
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (!mounted) return;
+      const u = session?.user ?? null;
+      setUser(u);
+      if (u) await loadProfile(u, mounted);
+      setLoading(false);
+    });
+
+    // ── 2. React to sign-in / sign-out ────────────────────────────────────
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (!mounted) return;
+        const u = session?.user ?? null;
+        setUser(u);
+        if (u) {
+          await loadProfile(u, mounted);
+        } else {
+          setRole('user');
+        }
         setLoading(false);
       }
-    }, 8000);
-
-    // Check active sessions and sets the user
-    supabase.auth.getSession().then((response) => {
-      if (!mounted) return;
-      
-      const session = response?.data?.session ?? null;
-      const user = session?.user ?? null;
-      
-      setUser(user);
-      if (user) {
-        ensureProfile(user);
-        fetchUserRoleAndStatus(user.id);
-      }
-      setLoading(false);
-    }).catch(err => {
-      console.error('Session error:', err);
-      if (mounted) setLoading(false);
-    });
-
-    // Listen for changes on auth state (logged in, signed out, etc.)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (!mounted) return;
-      const user = session?.user ?? null;
-      setUser(user);
-      if (user) {
-        await ensureProfile(user);
-        await fetchUserRoleAndStatus(user.id);
-      } else {
-        setRole('user');
-        setStatus('active');
-      }
-      setLoading(false);
-    });
+    );
 
     return () => {
       mounted = false;
-      clearTimeout(safetyTimer);
-      subscription?.unsubscribe();
+      subscription.unsubscribe();
     };
   }, []);
 
-  const ensureProfile = async (user) => {
+  // ── Load / auto-create profile, then read role ─────────────────────────
+  const loadProfile = async (u, mounted) => {
     try {
-      // Check if profile exists
-      const { data } = await supabase.from('profiles').select('id').eq('id', user.id).single();
-      if (!data) {
-        // Create profile
-        await supabase.from('profiles').insert([{
-          id: user.id,
-          username: user.email,
-          full_name: user.user_metadata?.full_name || user.email?.split('@')[0],
-          role: 'user',
-          status: 'active'
-        }]);
-      }
-    } catch (err) {
-      console.error('Error ensuring profile:', err);
-    }
-  };
-
-  const fetchUserRoleAndStatus = async (userId) => {
-    try {
-      const { data, error } = await supabase
+      let { data, error } = await supabase
         .from('profiles')
         .select('role, status')
-        .eq('id', userId)
-        .single();
-      
-      if (data) {
-        if (data.status === 'inactive') {
-          // If deactivated, force sign out immediately
-          await supabase.auth.signOut();
-          setUser(null);
-          setRole('user');
-          setStatus('inactive');
-          alert('Tu cuenta ha sido inhabilitada por un administrador.');
-          return;
-        }
-        setRole(data.role);
-        setStatus(data.status || 'active');
+        .eq('id', u.id)
+        .maybeSingle();
+
+      // Auto-create if doesn't exist yet
+      if (!data && !error) {
+        const { data: created } = await supabase
+          .from('profiles')
+          .insert([{
+            id: u.id,
+            username: u.email,
+            full_name: u.user_metadata?.full_name || u.email?.split('@')[0],
+            role: 'user',
+            status: 'active'
+          }])
+          .select('role, status')
+          .single();
+        data = created;
       }
+
+      if (!mounted) return;
+
+      if (data?.status === 'inactive') {
+        await supabase.auth.signOut();
+        setUser(null);
+        setRole('user');
+        alert('Tu cuenta ha sido inhabilitada por un administrador.');
+        return;
+      }
+
+      if (data?.role) setRole(data.role);
     } catch (err) {
-      console.error('Error fetching role and status:', err);
+      console.error('Profile load error:', err);
     }
   };
 
   return (
-    <AuthContext.Provider value={{ user, role, status, loading }}>
+    <AuthContext.Provider value={{ user, role, loading }}>
       {children}
     </AuthContext.Provider>
   );
