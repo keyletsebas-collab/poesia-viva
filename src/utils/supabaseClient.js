@@ -1,7 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+// Credenciales en Base64
+const _a = atob('aHR0cHM6Ly9iaWVucmV6aWZsc2pwbXNra2t1ZC5zdXBhYmFzZS5jbw==');
+const _b = atob('c2JfcHVibGlzaGFibGVfZmZBZk1VLW9XQzRNdFRzaERacUZGZ19KSjZYUkgtbA==');
 
 // ── Telemetría de conexión ────────────────────────────────────────────────
 console.log(
@@ -9,7 +10,7 @@ console.log(
   'color:#d4af37; font-weight:600; font-family:monospace;'
 );
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export const supabase = createClient(_a, _b);
 
 // Verifica la conexión con un ping ligero
 supabase.from('profiles').select('count', { count: 'exact', head: true }).then(({ error }) => {
