@@ -29,9 +29,14 @@ const Programs = () => {
 
   const fetchPrograms = async () => {
     setLoading(true);
-    const { data } = await supabase.from('programs').select('*').order('created_at', { ascending: false });
-    if (data) setPrograms(data);
-    setLoading(false);
+    try {
+      const { data } = await supabase.from('programs').select('*').order('created_at', { ascending: false });
+      if (data) setPrograms(data);
+    } catch (err) {
+      console.warn('[Verbo Eterno] Programs fetch error:', err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleAddProgram = async (e) => {

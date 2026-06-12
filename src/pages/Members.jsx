@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '../utils/supabaseClient';
 import { useState, useEffect, useCallback } from 'react';
 import {
   User, Shield, PenTool, Mail, Calendar,
@@ -34,10 +34,6 @@ const Members = () => {
   const [actionLoading, setActionLoading] = useState(null);
   const [toast, setToast]                 = useState(null);
   const { role, user } = useAuth();
-  const supabase = createClient(
-    atob('aHR0cHM6Ly9iaWVucmV6aWZsc2pwbXNra2t1ZC5zdXBhYmFzZS5jbw=='),
-    atob('c2JfcHVibGlzaGFibGVfZmZBZk1VLW9XQzRNdFRzaERacUZGZ19KSjZYUkgtbA==')
-  );
 
   const showToast = (message, type = 'success') => setToast({ message, type });
 
