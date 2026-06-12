@@ -26,8 +26,27 @@ const Sidebar = () => {
   const [isOpen, setIsOpen] = useState(false);
 
   const handleLogout = async () => {
+    // 1. Cerrar sesión en Supabase
     await supabase.auth.signOut();
-    navigate('/login');
+
+    // 2. Limpiar localStorage y sessionStorage
+    localStorage.clear();
+    sessionStorage.clear();
+
+    // 3. Borrar IndexedDB (Supabase guarda la sesión aquí)
+    try {
+      const dbs = await indexedDB.databases();
+      dbs.forEach(db => db.name && indexedDB.deleteDatabase(db.name));
+    } catch (_) {}
+
+    // 4. Borrar caché de Service Workers
+    try {
+      const keys = await caches.keys();
+      await Promise.all(keys.map(k => caches.delete(k)));
+    } catch (_) {}
+
+    // 5. Recarga limpia — sin caché residual
+    window.location.href = '/login';
   };
 
   return (
