@@ -4,8 +4,9 @@
 -- ─────────────────────────────────────────────────────────────────────────
 
 -- 1. Add program_id column to events (FK to programs table)
+--    programs.id is UUID in the actual DB
 ALTER TABLE events
-  ADD COLUMN IF NOT EXISTS program_id BIGINT REFERENCES programs(id) ON DELETE SET NULL;
+  ADD COLUMN IF NOT EXISTS program_id UUID REFERENCES programs(id) ON DELETE SET NULL;
 
 -- 2. Add has_payment column if it doesn't exist yet
 ALTER TABLE events
