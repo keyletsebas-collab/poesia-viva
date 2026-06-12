@@ -6,10 +6,20 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "build:android": "vite build && npx cap sync android",
+    "open:android": "npx cap open android",
+    "cap:sync": "npx cap sync",
     "lint": "eslint .",
     "preview": "vite preview"
   },
   "dependencies": {
+    "@capacitor/android": "^8.4.0",
+    "@capacitor/app": "^8.1.0",
+    "@capacitor/cli": "^8.4.0",
+    "@capacitor/core": "^8.4.0",
+    "@capacitor/haptics": "^8.0.2",
+    "@capacitor/keyboard": "^8.0.3",
+    "@capacitor/status-bar": "^8.0.2",
     "@supabase/supabase-js": "^2.99.3",
     "lucide-react": "^0.577.0",
     "mammoth": "^1.12.0",
@@ -26,6 +36,7 @@
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.5.2",
     "globals": "^17.4.0",
+    "typescript": "^6.0.3",
     "vite": "^8.0.1"
   }
 }

@@ -1,25 +1,32 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
 
 export default defineConfig({
   plugins: [react()],
   server: {
     port: 8888,
-    strictPort: true
+    strictPort: true,
   },
   build: {
-    // Split vendor chunks for better caching
+    chunkSizeWarningLimit: 600,
     rollupOptions: {
       output: {
-        manualChunks: {
-          'react-core':   ['react', 'react-dom'],
-          'react-router': ['react-router-dom'],
-          'supabase':     ['@supabase/supabase-js'],
-          'icons':        ['lucide-react'],
-        }
-      }
+        // Vite 8 requiere función para manualChunks
+        manualChunks(id) {
+          if (id.includes('node_modules/react-dom') || id.includes('node_modules/react/')) {
+            return 'react-core';
+          }
+          if (id.includes('node_modules/react-router')) {
+            return 'react-router';
+          }
+          if (id.includes('node_modules/@supabase')) {
+            return 'supabase';
+          }
+          if (id.includes('node_modules/lucide-react')) {
+            return 'icons';
+          }
+        },
+      },
     },
-    // Smaller chunks load faster on slow connections
-    chunkSizeWarningLimit: 400,
-  }
-})
+  },
+});
