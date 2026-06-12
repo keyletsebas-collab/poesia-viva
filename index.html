@@ -3,15 +3,27 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Verbo Eterno</title>
 
-    <!-- Preconnect to external services for faster DNS + TLS -->
+    <!-- Android/mobile viewport: sin zoom, respeta safe areas del notch -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+
+    <!-- PWA / Android meta -->
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="theme-color" content="#0c0a08" />
+    <meta name="apple-mobile-web-app-title" content="Verbo Eterno" />
+
+    <!-- SEO -->
+    <title>Verbo Eterno</title>
+    <meta name="description" content="Plataforma digital del grupo de poesía Verbo Eterno — poesías, salidas, ensayos y programas." />
+
+    <!-- Preconnect para DNS+TLS más rápido -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="preconnect" href="https://bienreziflsjpmskkkud.supabase.co" />
 
-    <!-- Google Fonts with display=swap so text shows immediately -->
+    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,800;1,400&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
   </head>
   <body>
