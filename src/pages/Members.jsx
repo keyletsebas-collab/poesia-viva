@@ -69,8 +69,8 @@ const Members = () => {
     try {
       const { error } = await supabase.from('profiles').update({ status: newStatus }).eq('id', memberId);
       if (error) throw error;
+      // El Realtime listener refresca la lista una vez la DB confirma el cambio
       showToast(`${name} ${newStatus === 'active' ? 'activado ✓' : 'desactivado ✓'}`);
-      fetchMembers();
     } catch (err) { showToast(err.message, 'error'); }
     finally { setActionLoading(null); }
   };
@@ -83,8 +83,8 @@ const Members = () => {
     try {
       const { error } = await supabase.from('profiles').update({ role: newRole }).eq('id', memberId);
       if (error) throw error;
+      // El Realtime listener refresca la lista una vez la DB confirma el cambio
       showToast(`${name} ahora es ${newRole === 'admin' ? 'Administrador ★' : 'Miembro'}`);
-      fetchMembers();
     } catch (err) { showToast(err.message, 'error'); }
     finally { setActionLoading(null); }
   };
