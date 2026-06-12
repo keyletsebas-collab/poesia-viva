@@ -11,12 +11,31 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     let mounted = true;
 
+    // ── Safety timeout: si Supabase no responde en 8s, liberar loading ────
+    const timeoutId = setTimeout(() => {
+      if (mounted) {
+        console.warn('[Verbo Eterno] ⚠️ Timeout al conectar con Supabase. Redirigiendo al login.');
+        setLoading(false);
+      }
+    }, 8000);
+
     // ── 1. Load session once on mount ─────────────────────────────────────
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session }, error }) => {
       if (!mounted) return;
+      clearTimeout(timeoutId);
+      if (error) {
+        console.error('[Verbo Eterno] Error al obtener sesión:', error.message);
+        setLoading(false);
+        return;
+      }
       const u = session?.user ?? null;
       setUser(u);
       if (u) await loadProfile(u, mounted);
+      setLoading(false);
+    }).catch((err) => {
+      if (!mounted) return;
+      clearTimeout(timeoutId);
+      console.error('[Verbo Eterno] Error crítico al obtener sesión:', err);
       setLoading(false);
     });
 
@@ -37,9 +56,45 @@ export const AuthProvider = ({ children }) => {
 
     return () => {
       mounted = false;
+      clearTimeout(timeoutId);
       subscription.unsubscribe();
     };
   }, []);
+
+  // ── Realtime: watch own profile for role / status changes ─────────────
+  useEffect(() => {
+    if (!user) return;
+    let mounted = true;
+
+    const channel = supabase
+      .channel(`profile-watch-${user.id}`)
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'profiles', filter: `id=eq.${user.id}` },
+        async (payload) => {
+          if (!mounted) return;
+          const { new: updated } = payload;
+
+          // Admin desactivó la cuenta → forzar logout
+          if (updated.status === 'inactive') {
+            await supabase.auth.signOut();
+            setUser(null);
+            setRole('user');
+            alert('Tu cuenta ha sido inhabilitada por un administrador.');
+            return;
+          }
+
+          // Rol cambiado → actualizar contexto sin recargar
+          if (updated.role) setRole(updated.role);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      mounted = false;
+      supabase.removeChannel(channel);
+    };
+  }, [user?.id]);
 
   // ── Load / auto-create profile, then read role ─────────────────────────
   const loadProfile = async (u, mounted) => {

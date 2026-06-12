@@ -15,6 +15,7 @@ const Settings   = lazy(() => import('./pages/Settings'));
 const News       = lazy(() => import('./pages/News'));
 const Outings    = lazy(() => import('./pages/Outings'));
 const Rehearsals = lazy(() => import('./pages/Rehearsals'));
+const AdminPanel = lazy(() => import('./pages/AdminPanel'));
 
 // ── Minimal inline loader (no spinner dependency) ─────────────────────────
 const PageLoader = () => (
@@ -40,6 +41,14 @@ const ProtectedRoute = ({ children }) => {
   return children;
 };
 
+const AdminRoute = ({ children }) => {
+  const { user, role, loading } = useAuth();
+  if (loading) return <PageLoader />;
+  if (!user) return <Navigate to="/login" replace />;
+  if (role !== 'admin') return <Navigate to="/" replace />;
+  return children;
+};
+
 const AuthWrapper = () => {
   const { user } = useAuth();
   return (
@@ -58,6 +67,7 @@ const AuthWrapper = () => {
             <Route path="/lugares"   element={<ProtectedRoute><Places /></ProtectedRoute>} />
             <Route path="/miembros"  element={<ProtectedRoute><Members /></ProtectedRoute>} />
             <Route path="/ajustes"   element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+            <Route path="/admin"     element={<AdminRoute><AdminPanel /></AdminRoute>} />
             {/* Legacy redirects */}
             <Route path="/poetries"  element={<Navigate to="/poetrias" replace />} />
             <Route path="/programs"  element={<Navigate to="/programas" replace />} />

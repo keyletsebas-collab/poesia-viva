@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import {
   Home, Users, MapPin, Settings, LogOut,
   BookOpen, FileText, PenTool, Menu, X,
-  Newspaper, Music, Calendar
+  Newspaper, Music, Calendar, Shield
 } from 'lucide-react';
 
 const NAV = [
@@ -16,6 +16,7 @@ const NAV = [
   { to: '/salidas',   icon: Calendar,  label: 'Salidas' },
   { to: '/ensayos',   icon: Music,     label: 'Ensayos' },
   { to: '/lugares',   icon: MapPin,    label: 'Lugares' },
+  { to: '/miembros',  icon: Users,     label: 'Miembros' },
   { to: '/ajustes',   icon: Settings,  label: 'Ajustes' },
 ];
 
@@ -92,6 +93,17 @@ const Sidebar = () => {
               <span>{label}</span>
             </NavLink>
           ))}
+
+          {/* Admin-only link */}
+          {role === 'admin' && (
+            <NavLink to="/admin"
+              className={({ isActive }) => `nav-link nav-admin${isActive ? ' nav-admin-active' : ''}`}
+              onClick={() => setIsOpen(false)}
+              style={{ marginTop: '0.5rem' }}>
+              <Shield size={18} />
+              <span>Panel Admin</span>
+            </NavLink>
+          )}
         </nav>
 
         {/* User footer */}
@@ -134,6 +146,23 @@ const Sidebar = () => {
         .nav-link:hover { color: var(--text-main); background: rgba(255,255,255,0.04); }
         .nav-active { color: var(--accent) !important; background: var(--accent-bg) !important; }
         .nav-active svg { color: var(--accent); }
+
+        .nav-admin {
+          color: var(--accent) !important;
+          background: rgba(212,175,55,0.04) !important;
+          border: 1px solid rgba(212,175,55,0.12) !important;
+          margin-top: 0.5rem !important;
+        }
+        .nav-admin:hover {
+          background: rgba(212,175,55,0.1) !important;
+          border-color: rgba(212,175,55,0.3) !important;
+          box-shadow: 0 0 12px rgba(212,175,55,0.1);
+        }
+        .nav-admin-active {
+          background: rgba(212,175,55,0.15) !important;
+          border-color: rgba(212,175,55,0.35) !important;
+          box-shadow: 0 0 16px rgba(212,175,55,0.15) !important;
+        }
 
         @media (max-width: 1024px) {
           .mobile-topbar { display: flex !important; }
